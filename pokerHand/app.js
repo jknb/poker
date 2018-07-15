@@ -45,26 +45,41 @@ let randomFiveCards = pickFiveCards(deck);
 // Show hand in page
 showInPage(randomFiveCards);
 // Check hand ranking
-randomFiveCards = checkHand(randomFiveCards);
-
+let result = checkHand(randomFiveCards);
+document.querySelector('#result').innerHTML = result;
 
 // Pick 5 random cards from deck
 function pickFiveCards(cards) {
     const fiveCards = [];
-    for (let i = 1; i <= 5; i++) {
-        fiveCards.push(cards[Math.floor((Math.random() * 51))]);
+    while (fiveCards.length < 5) {
+        let randomCard = cards[Math.floor((Math.random() * 51))];   
+        if(!contains(randomCard, fiveCards)) {
+            fiveCards.push(randomCard);
+        }
     }
     return fiveCards;
+}
+
+function contains(item, array) {
+    const index = array.indexOf(item);
+    if(index >= 0) {
+        return true;
+    }
+    else return false;
 }
 
 // Check hand ranking
 function checkHand(cards) {
     let rank = checkPairs(cards);
-    
+    console.log(' RANK -> ' , rank)
     if(rank === 'No Pair found') {
-        rank = checkStraightAndFlush(cards);
+        let largest = cards.sort(function(a, b) {
+            return a.value-b.value;
+        });
+        largest = cards[cards.length - 1];
+        rank = largest.name.split(' ')[0] + ' High';
     }
-    return cards;
+    return rank;
 }
 
 function checkPairs(cards) {
@@ -88,7 +103,7 @@ function checkPairs(cards) {
         numberOfOccurences.push(`${unique[j]} -> ${count}`);
         count = 0;
     }
-    console.log('NUMBEROFOCCURENCES: ', numberOfOccurences);
+    console.log('NUMBER OF OCCURENCES: ', numberOfOccurences);
     let results = [];
     // Check pair
     let hasPair = false;
@@ -162,8 +177,7 @@ function checkPairs(cards) {
     console.log('hasNoPair: ', hasNoPair);
 
     const result = showResults(results);
-    document.querySelector('#result').innerHTML = result;
-    
+
     return result;
 }
 
