@@ -98,6 +98,7 @@ function checkHand(cards) {
     console.log(' RANK -> ' , rank)
     if(rank === 'No Pair found') {
         rank = checkStraightAndFlush(cards);
+        // No pairs / No Straight / No Flush --> Show High card
         if(rank === 'No Straight or Flush found') {
             let largest = cards.sort(function(a, b) {
                 return a.value-b.value;
