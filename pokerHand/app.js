@@ -109,7 +109,13 @@ function checkHand(cards) {
             let largest = cards.sort(function(a, b) {
                 return a.value-b.value;
             });
-            largest = cards[cards.length - 1];
+            // ACE
+            if(largest[0].value === 1) {
+                largest = cards[0];
+            }
+            else {
+                largest = cards[cards.length - 1];
+            }
             rank = largest.name.split(' ')[0] + ' High';
         }
     }
@@ -191,26 +197,44 @@ function checkPairs(cards) {
     function showResults(arr, pairs) {
         if(arr[0] && arr[2]) {
             return (pairs[0][2] > pairs[1][2] ? 
-                `Full House! ${pairs[0][0]}'s over ${pairs[1][0]}'s` :
-                `Full House! ${pairs[1][0]}'s over ${pairs[0][0]}'s`)
+                `Full House! ${giveNameToValue(pairs[0][0])}'s over ${giveNameToValue(pairs[1][0])}'s` :
+                `Full House! ${giveNameToValue(pairs[1][0])}'s over ${giveNameToValue(pairs[0][0])}'s`)
             ;
         }
         else if(arr[0]) {
-            return `One Pair of ${pairs[0][0]}'s!`;
+            return `One Pair of ${giveNameToValue(pairs[0][0])}${giveNameToValue(pairs[0][0]).length > 2 ? 's' : "'s"}!`;
         }
         else if(arr[1]) {
-            return `Two Pairs of ${pairs[0][0]}'s and ${pairs[1][0]}'s' `;
+            return `Two Pairs of ${giveNameToValue(pairs[0][0])}${giveNameToValue(pairs[0][0]).length > 2 ? 's' : "'s"} and ${giveNameToValue(pairs[1][0])}${giveNameToValue(pairs[1][0]).length > 2 ? 's' : "'s"} `;
         }
         else if(arr[2]) {
-            return `Three of a kind! ${pairs[0][0]}'s!`;
+            return `Three of a kind! ${giveNameToValue(pairs[0][0])}${giveNameToValue(pairs[0][0]).length > 2 ? 's' : "'s"}!`;
         }
         else if(arr[3]) {
-            return `Four of a kind! ${pairs[0][0]}'s!`;
+            return `Four of a kind! ${giveNameToValue(pairs[0][0])}${giveNameToValue(pairs[0][0]).length > 2 ? 's' : "'s"}!`;
         }
         else {
             return 'No Pair found';
         }
     }
+
+    function giveNameToValue(value) {
+        if(value === '1') {
+            return 'Ace';
+        }
+        else if(value === '11') {
+            return 'Jack';
+        }
+        else if(value === '12') {
+            return 'Queen';
+        }
+        else if(value === '13') {
+            return 'King';
+        }
+        else {
+            return value;
+        }
+    }   
     
     console.log('hasPair: ', hasPair);
     console.log('hasTwoPair: ', hasTwoPair);
