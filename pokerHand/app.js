@@ -74,8 +74,15 @@ function pickFiveCards(cards) {
     // fiveCards.push(deck[12]);
     // fiveCards.push(deck[16]);
 
-    // [PREDETERMINED HAND - STRAIGHT 1-5]
+    // [PREDETERMINED HAND - STRAIGHT FLUSH 9-K]
     // fiveCards.push(deck[32]);
+    // fiveCards.push(deck[36]);
+    // fiveCards.push(deck[40]);
+    // fiveCards.push(deck[44]);
+    // fiveCards.push(deck[48]);
+
+    // [PREDETERMINED HAND - FLUSH ROYALE]
+    // fiveCards.push(deck[0]);
     // fiveCards.push(deck[36]);
     // fiveCards.push(deck[40]);
     // fiveCards.push(deck[44]);
@@ -98,7 +105,6 @@ function checkHand(cards) {
     console.log(' RANK -> ' , rank)
     if(rank === 'No Pair found') {
         rank = checkStraightAndFlush(cards);
-        // No pairs / No Straight / No Flush --> Show High card
         if(rank === 'No Straight or Flush found') {
             let largest = cards.sort(function(a, b) {
                 return a.value-b.value;
@@ -221,6 +227,9 @@ function checkPairs(cards) {
 function checkStraightAndFlush(cards) {
     let straightResult = checkStraight(cards);
     let flushResult = checkFlush(cards);
+    console.log('straightResult>>>>>', straightResult);
+    console.log('flushResult>>>>>', flushResult);
+
     let result;
     
     // STRAIGHT FLUSH & FLUSH ROYALE CASES
@@ -257,7 +266,7 @@ function checkStraight(cards) {
         console.log(item.value);
     })
     // Special case: Ace High Straight
-    if((sortedCards[sortedCards.length -1].value === 13) && (sortedCards[1].value === 9) && (sortedCards[0].value === 1)) {
+    if((sortedCards[sortedCards.length -1].value === 13) && (sortedCards[1].value === 10) && (sortedCards[0].value === 1)) {
         return `Straight! ${sortedCards[1].value} to ${sortedCards[0].value}`;
     } 
     // If straight, [last value - first value === 4] (in sorted array)
