@@ -57,6 +57,30 @@ function pickFiveCards(cards) {
             fiveCards.push(randomCard);
         }
     }
+
+    // FOR TESTING PURPOSES
+
+    // [PREDETERMINED HAND - FULL HOUSE ACES/DUCES]
+    // fiveCards.push(deck[1]);
+    // fiveCards.push(deck[2]);
+    // fiveCards.push(deck[3]);
+    // fiveCards.push(deck[5]);
+    // fiveCards.push(deck[6]);
+
+    // [PREDETERMINED HAND - STRAIGHT 1-5]
+    // fiveCards.push(deck[1]);
+    // fiveCards.push(deck[4]);
+    // fiveCards.push(deck[8]);
+    // fiveCards.push(deck[12]);
+    // fiveCards.push(deck[16]);
+
+    // [PREDETERMINED HAND - STRAIGHT 1-5]
+    // fiveCards.push(deck[32]);
+    // fiveCards.push(deck[36]);
+    // fiveCards.push(deck[40]);
+    // fiveCards.push(deck[44]);
+    // fiveCards.push(deck[48]);
+
     return fiveCards;
 }
 
@@ -73,11 +97,14 @@ function checkHand(cards) {
     let rank = checkPairs(cards);
     console.log(' RANK -> ' , rank)
     if(rank === 'No Pair found') {
-        let largest = cards.sort(function(a, b) {
-            return a.value-b.value;
-        });
-        largest = cards[cards.length - 1];
-        rank = largest.name.split(' ')[0] + ' High';
+        rank = checkStraightAndFlush(cards);
+        if(rank === 'No Straight or Flush found') {
+            let largest = cards.sort(function(a, b) {
+                return a.value-b.value;
+            });
+            largest = cards[cards.length - 1];
+            rank = largest.name.split(' ')[0] + ' High';
+        }
     }
     return rank;
 }
@@ -105,6 +132,7 @@ function checkPairs(cards) {
     }
     console.log('NUMBER OF OCCURENCES: ', numberOfOccurences);
     let results = [];
+    let pairs = [];
     // Check pair
     let hasPair = false;
     let countOfPairs = 0;
@@ -127,6 +155,7 @@ function checkPairs(cards) {
         if(item[2] === '2') {
             hasPair = true;
             countOfPairs++;
+            pairs.push(item);
         }
         // Two pair
         if(countOfPairs === 2) {
@@ -136,33 +165,40 @@ function checkPairs(cards) {
         // 3 of a kind
         else if(item[2] === '3') {
             hasThree = true;
+            pairs.push(item);
         }
         // 4 of a kind
         else if(item[2] === '4') {
             hasFour = true;
+            pairs.push(item);
         }
     });
     results.push(hasPair);
     results.push(hasTwoPair);
     results.push(hasThree);
     results.push(hasFour);
-    console.log('RESULTS ', showResults(results));
-    
-    function showResults(arr) {
+    console.log('RESULTSSSSS', results);
+    console.log('RESULTS ', showResults(results, pairs));
+    console.log('PAIRS -> ', pairs);
+
+    function showResults(arr, pairs) {
         if(arr[0] && arr[2]) {
-            return 'Full House';
+            return (pairs[0][2] > pairs[1][2] ? 
+                `Full House! ${pairs[0][0]}'s over ${pairs[1][0]}'s` :
+                `Full House! ${pairs[1][0]}'s over ${pairs[0][0]}'s`)
+            ;
         }
         else if(arr[0]) {
-            return 'One Pair';
+            return `One Pair of ${pairs[0][0]}'s!`;
         }
         else if(arr[1]) {
-            return 'Two Pair';
+            return `Two Pairs of ${pairs[0][0]}'s and ${pairs[1][0]}'s' `;
         }
         else if(arr[2]) {
-            return 'Three of a kind';
+            return `Three of a kind! ${pairs[0][0]}'s!`;
         }
         else if(arr[3]) {
-            return 'Four of a kind';
+            return `Four of a kind! ${pairs[0][0]}'s!`;
         }
         else {
             return 'No Pair found';
@@ -176,14 +212,75 @@ function checkPairs(cards) {
     console.log('hasFour: ', hasFour);
     console.log('hasNoPair: ', hasNoPair);
 
-    const result = showResults(results);
+    const result = showResults(results, pairs);
 
     return result;
 }
 
 function checkStraightAndFlush(cards) {
-    console.log('Checking for straight or flush....');
+    let straightResult = checkStraight(cards);
+    let flushResult = checkFlush(cards);
+    let result;
+    
+    // STRAIGHT FLUSH & FLUSH ROYALE CASES
+    if(straightResult != 'No Straight found' && flushResult != 'No Flush found') {
+        let sortedCards = cards.sort(function(a, b) {
+            return a.value-b.value;
+        });
+        // Special case: FLUSH ROYALE
+        if((sortedCards[sortedCards.length -1].value === 13) && (sortedCards[0].value === 1)) {
+            result =  `Flush Royale! ${sortedCards[1].value} to ${sortedCards[0].value}`;
+        } 
+        else {
+            result = `Straight Flush! ${sortedCards[0].value} to ${sortedCards[sortedCards.length -1].value}`;
+        }
+    }
+    // Flush
+    if(straightResult === 'No Straight found' && flushResult != 'No Flush found') {
+        result = flushResult;
+    }
+    else if(straightResult != 'No Straight found' && flushResult === 'No Flush found') {
+        result = straightResult;
+    }
+    else if(straightResult === 'No Straight found' && flushResult === 'No Flush found') {
+        result = 'No Straight or Flush found';
+    }
+    return result;
 }
+
+function checkStraight(cards) {
+    let sortedCards = cards.sort(function(a, b) {
+        return a.value-b.value;
+    });
+    sortedCards.forEach(function(item) {
+        console.log(item.value);
+    })
+    // Special case: Ace High Straight
+    if((sortedCards[sortedCards.length -1].value === 13) && (sortedCards[1].value === 9) && (sortedCards[0].value === 1)) {
+        return `Straight! ${sortedCards[1].value} to ${sortedCards[0].value}`;
+    } 
+    // If straight, [last value - first value === 4] (in sorted array)
+    if(sortedCards[sortedCards.length - 1].value - sortedCards[0].value === 4) {
+        return `Straight! ${sortedCards[0].value} to ${sortedCards[sortedCards.length -1].value}`;
+    }
+    else {
+        return 'No Straight found';
+    }
+}
+
+function checkFlush(cards) {
+    // Check if every card's suit is the same as the first card's
+    if(cards.every(function(card) {
+        return card.suit === cards[0].suit;
+    })) {
+        return `Flush! 5 ${cards[0].suit}!`;
+    } 
+    else {
+        return 'No Flush found';
+    }
+}
+
+
 
 function showInPage(cards) {
     let output = '';
