@@ -22,6 +22,7 @@ document.querySelector('#result').innerHTML = result;
 function populate(deck) {
     let i,j;
     let card;
+
     for (i = 0; i < 13; i++) {
         
         for (j = 0; j < 4; j++) {
@@ -61,6 +62,7 @@ function pickFiveCards(cards) {
             fiveCards.push(randomCard);
         }
     }
+
     // ***HARD CODED TESTS***
 
     // [PREDETERMINED HAND - FULL HOUSE ACES/DUCES]
@@ -87,6 +89,12 @@ function pickFiveCards(cards) {
     // fiveCards.push(deck[40]);
     // fiveCards.push(deck[44]);
     // fiveCards.push(deck[48]);
+    // [PREDETERMINED HAND - FOUR OF A KIND]
+    // fiveCards.push(deck[0]);
+    // fiveCards.push(deck[1]);
+    // fiveCards.push(deck[2]);
+    // fiveCards.push(deck[3]);
+    // fiveCards.push(deck[10]);
     
     return fiveCards;
 }
@@ -125,18 +133,39 @@ function contains(item, array) {
 // checkhand rewrite
 function checkHand(cards) {
     let rank = '';
-    let pairResult;
+    
     let straightResult;
     let flushResult;
+    let pairResult;
 
+    straightResult = checkStraight(cards);
+    flushResult = checkFlush(cards);
     pairResult = checkPairs(cards);
-    // If no pairs are found, then check for flushes and straights since they can't exist together
-    if(pairResult.values === 0) {
-        straightResult = checkStraights(cards);
-    }
     
-    // straightResult = checkStraight(cards);
-    // flushResult = checkFlush(cards);
+    // Determine hand ranking to show in page. Will remake
+    let arr = [];
+    arr.push(straightResult, flushResult, pairResult);
+    arr = arr.filter(function(a) {
+        return a.values != 0;
+    })
+
+    if(arr.length === 0) {
+        rank = 'Nothing';
+    }
+    else {
+        rank = arr[0].text;
+    };
+
+    console.log('Pair: ', pairResult);
+    console.log('Straight: ', straightResult);
+    console.log('Flush: ', flushResult);
+    
+    // Straight Flush combos
+    if(straightResult.values != 0 && flushResult.values != 0) {
+        console.log('Straight Flush!!');
+    };
+
+    return rank;
 }
 
 function checkPairs(cards) {
@@ -153,8 +182,7 @@ function checkPairs(cards) {
 
     function CardWithCount(value, count) {
         this.value = value,
-        this.count = count,
-        this.lol;
+        this.count = count
     }
 
     // Push cards into array with number of occurences
@@ -189,8 +217,7 @@ function checkPairs(cards) {
             text: '',
             values: []
         };
-        
-        // One Pair / Three of a kind
+        // One Pair / Three of a kind / Four of a kind
         if(pairs.length === 1) { 
             let firstNamedValue = giveNameToValue(pairs[0].value);   
             // One pair
@@ -203,8 +230,13 @@ function checkPairs(cards) {
                 result.text = `Three of a kind! ${firstNamedValue}${apostropheOrNot(firstNamedValue)}`;
                 result.values = pairs[0].value;
             }
+             // Four of a kind
+             else if(pairs[0].count === 4) {
+                result.text = `Four of a kind! ${firstNamedValue}${apostropheOrNot(firstNamedValue)}`;
+                result.values.push(pairs[0].value);
+            }
         }
-        // Two Pair / Full House / Four of a kind
+        // Two Pair / Full House
         else if(pairs.length === 2) {
             let firstNamedValue = giveNameToValue(pairs[0].value);
             let secondNamedValue = giveNameToValue(pairs[1].value);
@@ -213,11 +245,6 @@ function checkPairs(cards) {
                 result.text = `Two Pair! ${firstNamedValue}${apostropheOrNot(firstNamedValue)} and ${secondNamedValue}${apostropheOrNot(secondNamedValue)}`;
                 result.values.push(pairs[0].value);
                 result.values.push(pairs[1].value);
-            }
-            // Four of a kind
-            else if(pairs[0].count === 4) {
-                result.text = `Four of a kind! ${firstNamedValue}${apostropheOrNot(firstNamedValue)}`;
-                result.values.push(pairs[0].value);
             }
             // Full house
             else {
@@ -232,40 +259,66 @@ function checkPairs(cards) {
             result.values = 0;
         }
 
-        console.log('RESULT' , result);
         return result;
     }
-
-    function apostropheOrNot(name) {
-        if(typeof name === 'number') {
-            return "'s";
-        }
-        else {
-            return "s";
-        }
-    }
-
-    function giveNameToValue(value) {
-        switch(value) {
-            case 1:
-                return value = 'Ace';
-            case 11: 
-                return value = 'Jack';
-            case 12:
-                return value = 'Queen';
-            case 13:
-                return value = 'King';
-            default: 
-                return value;
-        }   
-    }   
 
     return result;
 }
 
+function checkStraight(cards) {
+    const sortedCards = cards.sort(function(a, b) {
+        return a.value - b.value;
+    });
 
+    const lastCard = sortedCards[sortedCards.length -1].value;
+    const secondCard = sortedCards[1].value;
+    const firstCard = sortedCards[0].value;
 
+    console.log('LASTCARD ', lastCard);
+    console.log('SECONDCARD ', secondCard);
+    console.log('FIRSTCARD ', firstCard);
+    const result = {
+        text: '',
+        values: []
+    }
 
+    // Special case: Ace High Straight
+    if((lastCard === 13) && (secondCard === 10) && (firstCard === 1)) {
+        result.text = `Straight! ${giveNameToValue(secondCard)} to ${giveNameToValue(firstCard)}`;
+        result.values = sortedCards;
+    } 
+    // If straight, [last value - first value === 4] (in sorted array)
+    else if(lastCard - firstCard === 4) {
+        result.text = `Straight! ${giveNameToValue(firstCard)} to ${giveNameToValue(lastCard)}`;
+        result.values = sortedCards;
+    }
+    else {
+        result.text = 'No Straight found';
+        result.values = 0;
+    }
+
+    return result;
+}
+
+function checkFlush(cards) {
+    let result = {
+        text: '',
+        values: 0
+    };
+
+    let isFlush = cards.filter(function(item) {
+        return item.suit === cards[0].suit;
+    }).length === 5;
+    
+    if(isFlush) {
+        result.text = `You have a flush! All ${cards[0].suit}!!`;
+        result.values = cards[0].suit;
+    } 
+    else {
+        result.text = 'No Flush found';
+    }
+    return result;
+}
 
 function checkStraightAndFlush(cards) {
     let straightResult = checkStraight(cards);
@@ -301,39 +354,29 @@ function checkStraightAndFlush(cards) {
     return result;
 }
 
-function checkStraight(cards) {
-    let sortedCards = cards.sort(function(a, b) {
-        return a.value-b.value;
-    });
-    sortedCards.forEach(function(item) {
-        console.log(item.value);
-    })
-    // Special case: Ace High Straight
-    if((sortedCards[sortedCards.length -1].value === 13) && (sortedCards[1].value === 10) && (sortedCards[0].value === 1)) {
-        return `Straight! ${sortedCards[1].value} to ${sortedCards[0].value}`;
-    } 
-    // If straight, [last value - first value === 4] (in sorted array)
-    if(sortedCards[sortedCards.length - 1].value - sortedCards[0].value === 4) {
-        return `Straight! ${sortedCards[0].value} to ${sortedCards[sortedCards.length -1].value}`;
+function apostropheOrNot(name) {
+    if(typeof name === 'number') {
+        return "'s";
     }
     else {
-        return 'No Straight found';
+        return "s";
     }
 }
 
-function checkFlush(cards) {
-    // Check if every card's suit is the same as the first card's
-    if(cards.every(function(card) {
-        return card.suit === cards[0].suit;
-    })) {
-        return `Flush! 5 ${cards[0].suit}!`;
-    } 
-    else {
-        return 'No Flush found';
-    }
-}
-
-
+function giveNameToValue(value) {
+    switch(value) {
+        case 1:
+            return value = 'Ace';
+        case 11: 
+            return value = 'Jack';
+        case 12:
+            return value = 'Queen';
+        case 13:
+            return value = 'King';
+        default: 
+            return value;
+    }   
+}   
 
 function showInPage(cards) {
     let output = 'Your hand: <br><br>';
