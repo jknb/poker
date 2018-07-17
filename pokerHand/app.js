@@ -134,13 +134,9 @@ function contains(item, array) {
 function checkHand(cards) {
     let rank = '';
     
-    let straightResult;
-    let flushResult;
-    let pairResult;
-
-    straightResult = checkStraight(cards);
-    flushResult = checkFlush(cards);
-    pairResult = checkPairs(cards);
+    let straightResult = checkStraight(cards);
+    let flushResult = checkFlush(cards);
+    let pairResult = checkPairs(cards);
     
     // Determine hand ranking to show in page. Will remake
     let arr = [];
@@ -233,7 +229,7 @@ function checkPairs(cards) {
              // Four of a kind
              else if(pairs[0].count === 4) {
                 result.text = `Four of a kind! ${firstNamedValue}${apostropheOrNot(firstNamedValue)}`;
-                result.values.push(pairs[0].value);
+                result.values = pairs[0].value;
             }
         }
         // Two Pair / Full House
@@ -274,9 +270,6 @@ function checkStraight(cards) {
     const secondCard = sortedCards[1].value;
     const firstCard = sortedCards[0].value;
 
-    console.log('LASTCARD ', lastCard);
-    console.log('SECONDCARD ', secondCard);
-    console.log('FIRSTCARD ', firstCard);
     const result = {
         text: '',
         values: []
@@ -320,39 +313,39 @@ function checkFlush(cards) {
     return result;
 }
 
-function checkStraightAndFlush(cards) {
-    let straightResult = checkStraight(cards);
-    let flushResult = checkFlush(cards);
-    console.log('straightResult>>>>>', straightResult);
-    console.log('flushResult>>>>>', flushResult);
+// function checkStraightAndFlush(cards) {
+//     let straightResult = checkStraight(cards);
+//     let flushResult = checkFlush(cards);
+//     console.log('straightResult>>>>>', straightResult);
+//     console.log('flushResult>>>>>', flushResult);
 
-    let result;
+//     let result;
     
-    // STRAIGHT FLUSH & FLUSH ROYALE CASES
-    if(straightResult != 'No Straight found' && flushResult != 'No Flush found') {
-        let sortedCards = cards.sort(function(a, b) {
-            return a.value-b.value;
-        });
-        // Special case: FLUSH ROYALE
-        if((sortedCards[sortedCards.length -1].value === 13) && (sortedCards[0].value === 1)) {
-            result =  `Flush Royale! ${sortedCards[1].value} to ${sortedCards[0].value}`;
-        } 
-        else {
-            result = `Straight Flush! ${sortedCards[0].value} to ${sortedCards[sortedCards.length -1].value}`;
-        }
-    }
-    // Flush
-    if(straightResult === 'No Straight found' && flushResult != 'No Flush found') {
-        result = flushResult;
-    }
-    else if(straightResult != 'No Straight found' && flushResult === 'No Flush found') {
-        result = straightResult;
-    }
-    else if(straightResult === 'No Straight found' && flushResult === 'No Flush found') {
-        result = 'No Straight or Flush found';
-    }
-    return result;
-}
+//     // STRAIGHT FLUSH & FLUSH ROYALE CASES
+//     if(straightResult != 'No Straight found' && flushResult != 'No Flush found') {
+//         let sortedCards = cards.sort(function(a, b) {
+//             return a.value-b.value;
+//         });
+//         // Special case: FLUSH ROYALE
+//         if((sortedCards[sortedCards.length -1].value === 13) && (sortedCards[0].value === 1)) {
+//             result =  `Flush Royale! ${sortedCards[1].value} to ${sortedCards[0].value}`;
+//         } 
+//         else {
+//             result = `Straight Flush! ${sortedCards[0].value} to ${sortedCards[sortedCards.length -1].value}`;
+//         }
+//     }
+//     // Flush
+//     if(straightResult === 'No Straight found' && flushResult != 'No Flush found') {
+//         result = flushResult;
+//     }
+//     else if(straightResult != 'No Straight found' && flushResult === 'No Flush found') {
+//         result = straightResult;
+//     }
+//     else if(straightResult === 'No Straight found' && flushResult === 'No Flush found') {
+//         result = 'No Straight or Flush found';
+//     }
+//     return result;
+// }
 
 function apostropheOrNot(name) {
     if(typeof name === 'number') {
