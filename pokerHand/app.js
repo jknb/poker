@@ -86,8 +86,8 @@ function pickFiveCards(cards) {
     // [PREDETERMINED HAND - FLUSH ROYALE]
     // fiveCards.push(deck[0]);
     // fiveCards.push(deck[36]);
-    // fiveCards.push(deck[40]);
     // fiveCards.push(deck[44]);
+    // fiveCards.push(deck[40]);
     // fiveCards.push(deck[48]);
     // [PREDETERMINED HAND - FOUR OF A KIND]
     // fiveCards.push(deck[0]);
@@ -95,6 +95,12 @@ function pickFiveCards(cards) {
     // fiveCards.push(deck[2]);
     // fiveCards.push(deck[3]);
     // fiveCards.push(deck[10]);
+    // [PREDETERMINED HAND - 2 PAIR (TENS, KINGS) ACE HIGH]
+    // fiveCards.push(deck[0]);
+    // fiveCards.push(deck[36]);
+    // fiveCards.push(deck[37]);
+    // fiveCards.push(deck[48]);
+    // fiveCards.push(deck[49]);
     
     return fiveCards;
 }
@@ -107,58 +113,39 @@ function contains(item, array) {
     return false;
 }
 
-// Check hand ranking
-// function checkHand(cards) {
-//     let rank = checkPairs(cards);
-//     console.log(' RANK -> ' , rank)
-//     if(rank === 'No Pair found') {
-//         rank = checkStraightAndFlush(cards);
-//         if(rank === 'No Straight or Flush found') {
-//             let largest = cards.sort(function(a, b) {
-//                 return a.value-b.value;
-//             });
-//             // ACE
-//             if(largest[0].value === 1) {
-//                 largest = cards[0];
-//             }
-//             else {
-//                 largest = cards[cards.length - 1];
-//             }
-//             rank = largest.name.split(' ')[0] + ' High';
-//         }
-//     }
-//     return rank;
-// }
-
-// checkhand rewrite
 function checkHand(cards) {
     let rank = '';
     
     let straightResult = checkStraight(cards);
     let flushResult = checkFlush(cards);
-    let pairResult = checkPairs(cards);
+    let pairResult = checkPairs(cards).pairs;
     
     // Determine hand ranking to show in page. Will remake
     let arr = [];
-    arr.push(straightResult, flushResult, pairResult);
+    arr.push(flushResult, straightResult, pairResult);
     arr = arr.filter(function(a) {
         return a.values != 0;
     })
 
     if(arr.length === 0) {
-        rank = 'Nothing';
+        rank = `${giveNameToValue(findHighCard(cards))} high. Keep betting, you'll luck out eventually!`;
     }
     else {
         rank = arr[0].text;
     };
 
     console.log('Pair: ', pairResult);
-    console.log('Straight: ', straightResult);
     console.log('Flush: ', flushResult);
+    console.log('Straight: ', straightResult);
     
     // Straight Flush combos
     if(straightResult.values != 0 && flushResult.values != 0) {
-        console.log('Straight Flush!!');
+        if(straightResult.isAceHighStraight) {
+            rank = `Royal Flush!!! Ten to Ace all ${flushResult.values}!`;
+        } 
+        else {
+            rank = `Straight Flush!!! ${giveNameToValue(findHighCard(cards) - 4)} to ${giveNameToValue(findHighCard(cards))} all ${flushResult.values}!!`;
+        }
     };
 
     return rank;
@@ -200,35 +187,48 @@ function checkPairs(cards) {
     // Get pairs
     const pairs = numberOfOccurences.filter(function(card) {
         return (card.count > 1);
-    })
-    
+    });
+    // Get high card
+    const highCards = numberOfOccurences.filter(function(card) {
+        return (card.count === 1)
+    });
+    const highCard = findHighCard(highCards);
+                                
     console.log('PAIRS: ', pairs);
+    console.log('HIGH CARD: ', highCard);
     console.log('NUMBER OF OCCURENCES: ', numberOfOccurences);
     
-    const result = getResult(pairs);
+    const result = {
+        pairs: [],
+        highCard: 0
+    }
+    
+    result.pairs = getResult(pairs, highCard);
+    result.highCard = highCard;
 
     // Get hand ranking and respective values
-    function getResult(pairs) {
+    function getResult(pairs, highCard) {
         let result = {
             text: '',
             values: []
         };
+        highCard = giveNameToValue(highCard);
         // One Pair / Three of a kind / Four of a kind
         if(pairs.length === 1) { 
             let firstNamedValue = giveNameToValue(pairs[0].value);   
             // One pair
             if(pairs[0].count === 2) {
-                result.text = `One pair! ${firstNamedValue}${apostropheOrNot(firstNamedValue)}`;
+                result.text = `One pair! ${firstNamedValue}${apostropheOrNot(firstNamedValue)} with kicker ${highCard}`;
                 result.values = pairs[0].value;
             }
             // Three of a kind
             else if(pairs[0].count === 3) {
-                result.text = `Three of a kind! ${firstNamedValue}${apostropheOrNot(firstNamedValue)}`;
+                result.text = `Three of a kind! ${firstNamedValue}${apostropheOrNot(firstNamedValue)}  with kicker ${highCard}`;
                 result.values = pairs[0].value;
             }
              // Four of a kind
              else if(pairs[0].count === 4) {
-                result.text = `Four of a kind! ${firstNamedValue}${apostropheOrNot(firstNamedValue)}`;
+                result.text = `Four of a kind! ${firstNamedValue}${apostropheOrNot(firstNamedValue)}  with kicker ${highCard}`;
                 result.values = pairs[0].value;
             }
         }
@@ -238,7 +238,7 @@ function checkPairs(cards) {
             let secondNamedValue = giveNameToValue(pairs[1].value);
             // Two Pair
             if(pairs[0].count === 2 && pairs[0].count === 2) {
-                result.text = `Two Pair! ${firstNamedValue}${apostropheOrNot(firstNamedValue)} and ${secondNamedValue}${apostropheOrNot(secondNamedValue)}`;
+                result.text = `Two Pair! ${firstNamedValue}${apostropheOrNot(firstNamedValue)} and ${secondNamedValue}${apostropheOrNot(secondNamedValue)}  with kicker ${highCard}`;
                 result.values.push(pairs[0].value);
                 result.values.push(pairs[1].value);
             }
@@ -269,19 +269,23 @@ function checkStraight(cards) {
     const lastCard = sortedCards[sortedCards.length -1].value;
     const secondCard = sortedCards[1].value;
     const firstCard = sortedCards[0].value;
+    
+    const hasAce = firstCard === 1;
 
     const result = {
         text: '',
-        values: []
+        values: [],
+        isAceHighStraight: false
     }
 
-    // Special case: Ace High Straight
-    if((lastCard === 13) && (secondCard === 10) && (firstCard === 1)) {
+    const consecutivesResult = checkConsecutives(hasAce, lastCard, sortedCards);
+
+    if(consecutivesResult.isAceHighStraight) {
         result.text = `Straight! ${giveNameToValue(secondCard)} to ${giveNameToValue(firstCard)}`;
         result.values = sortedCards;
-    } 
-    // If straight, [last value - first value === 4] (in sorted array)
-    else if(lastCard - firstCard === 4) {
+        result.isAceHighStraight = true;
+    }
+    else if(consecutivesResult.isStraight) {
         result.text = `Straight! ${giveNameToValue(firstCard)} to ${giveNameToValue(lastCard)}`;
         result.values = sortedCards;
     }
@@ -290,6 +294,32 @@ function checkStraight(cards) {
         result.values = 0;
     }
 
+    return result;
+}
+
+function checkConsecutives(hasAce, lastCard, sortedCards) {
+    let hasConsecutives;
+    let result = {
+        isAceHighStraight: false,
+        isStraight: false,
+    }
+    if(hasAce) {
+        const cardsWithoutAce = [...sortedCards];
+        cardsWithoutAce.shift();   
+        sortedCardValues = cardsWithoutAce.map(item => { return item.value });
+        hasConsecutives = sortedCardValues.filter((item, index) => { return item === sortedCardValues[0] + index; }).length === 4;
+    }
+    else {
+        sortedCardValues = sortedCards.map(item => { return item.value });
+        hasConsecutives = sortedCardValues.filter((item, index) => { return item === sortedCardValues[0] + index; }).length === 5;
+    }
+
+    if(hasConsecutives) {
+        if(hasAce && lastCard === 13) {
+            result.isAceHighStraight = true;
+        }
+        result.isStraight = true;
+    }
     return result;
 }
 
@@ -313,39 +343,22 @@ function checkFlush(cards) {
     return result;
 }
 
-// function checkStraightAndFlush(cards) {
-//     let straightResult = checkStraight(cards);
-//     let flushResult = checkFlush(cards);
-//     console.log('straightResult>>>>>', straightResult);
-//     console.log('flushResult>>>>>', flushResult);
-
-//     let result;
-    
-//     // STRAIGHT FLUSH & FLUSH ROYALE CASES
-//     if(straightResult != 'No Straight found' && flushResult != 'No Flush found') {
-//         let sortedCards = cards.sort(function(a, b) {
-//             return a.value-b.value;
-//         });
-//         // Special case: FLUSH ROYALE
-//         if((sortedCards[sortedCards.length -1].value === 13) && (sortedCards[0].value === 1)) {
-//             result =  `Flush Royale! ${sortedCards[1].value} to ${sortedCards[0].value}`;
-//         } 
-//         else {
-//             result = `Straight Flush! ${sortedCards[0].value} to ${sortedCards[sortedCards.length -1].value}`;
-//         }
-//     }
-//     // Flush
-//     if(straightResult === 'No Straight found' && flushResult != 'No Flush found') {
-//         result = flushResult;
-//     }
-//     else if(straightResult != 'No Straight found' && flushResult === 'No Flush found') {
-//         result = straightResult;
-//     }
-//     else if(straightResult === 'No Straight found' && flushResult === 'No Flush found') {
-//         result = 'No Straight or Flush found';
-//     }
-//     return result;
-// }
+function findHighCard(cards) {
+    let highCard;
+    let cardValues = cards.map(function(card) {
+        return card.value;
+    });
+    cardValues.sort(function(a, b) {
+        return a - b;
+    });
+    // Ace high
+    if(cardValues[0] === 1) {
+        return highCard = cardValues[0];
+    }
+    else {
+        return highCard = cardValues[cardValues.length -1];
+    }
+}
 
 function apostropheOrNot(name) {
     if(typeof name === 'number') {
