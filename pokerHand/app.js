@@ -210,7 +210,8 @@ function checkPairs(cards) {
     function getResult(pairs, highCard) {
         let result = {
             text: '',
-            values: []
+            values: [],
+            highCard: highCard
         };
         highCard = giveNameToValue(highCard);
         // One Pair / Three of a kind / Four of a kind
